@@ -1,0 +1,26 @@
+{
+  "name": "ussd-minmo",
+  "version": "1.0.0",
+  "description": "Minmo Agent USSD service for Bitcoin liquidity agents over Africa's Talking USSD.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "seed": "node scripts/seed.js",
+    "demo": "node scripts/demo.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "nostr-tools": "^2.10.4",
+    "pino": "^9.6.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1",
+    "ws": "^8.18.0"
+  }
+}
