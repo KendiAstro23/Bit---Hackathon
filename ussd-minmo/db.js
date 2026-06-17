@@ -55,7 +55,24 @@ export async function initDb(db) {
   const database = db || await getDb();
   const schema = fs.readFileSync(path.join(APP_DIR, 'schema.sql'), 'utf8');
   await database.exec(schema);
+  await migrateDb(database);
   return database;
+}
+
+async function addColumnIfMissing(db, table, column, definition) {
+  const columns = await db.all(`PRAGMA table_info(${table})`);
+  if (!columns.some((row) => row.name === column)) {
+    await db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+
+async function migrateDb(db) {
+  await addColumnIfMissing(db, 'agents', 'password_hash', 'TEXT');
+  await addColumnIfMissing(db, 'agents', 'signup_status', "TEXT NOT NULL DEFAULT 'active'");
+  await addColumnIfMissing(db, 'agents', 'otp_hash', 'TEXT');
+  await addColumnIfMissing(db, 'agents', 'otp_expires_at', 'TEXT');
+  await addColumnIfMissing(db, 'agents', 'otp_verified_at', 'TEXT');
+  await addColumnIfMissing(db, 'agents', 'account_status', "TEXT NOT NULL DEFAULT 'active'");
 }
 
 export async function recordPublishedEvent(db, event, relayResults = []) {

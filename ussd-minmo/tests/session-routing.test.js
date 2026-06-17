@@ -36,10 +36,10 @@ async function step(context, text, sessionId = 'session-1', phone = '+2547000001
   return formatUssdResponse(result);
 }
 
-test('routes a new user through registration and publishes MIP-02', async () => {
+test('routes a new user through registration and publishes Pontmore Agent records', async () => {
   const context = await createContext();
 
-  assert.match(await step(context, ''), /^CON Minmo Agent USSD/);
+  assert.match(await step(context, ''), /^CON Pontmore Minmo USSD/);
   assert.match(await step(context, '1'), /^CON Enter your full name/);
   assert.match(await step(context, '1*Ada Lovelace'), /^CON Select currency/);
   assert.match(await step(context, '1*Ada Lovelace*1'), /^CON Select payment method/);
@@ -49,8 +49,12 @@ test('routes a new user through registration and publishes MIP-02', async () => 
 
   const agent = await context.db.get('SELECT * FROM agents WHERE phone = ?', ['+254700000123']);
   assert.equal(agent.name, 'Ada Lovelace');
-  assert.equal(context.events.length, 1);
-  assert.equal(JSON.parse(context.events[0].content).mip, 'MIP-02');
+  assert.equal(context.events.length, 2);
+  assert.equal(context.events[0].kind, 30361);
+  assert.equal(context.events[1].kind, 30360);
+  assert.equal(JSON.parse(context.events[0].content).version, 'PIP-01-draft');
+  assert.equal(JSON.parse(context.events[1].content).version, 'PIP-00-draft');
+  assert.deepEqual(context.events[1].tags.find((tag) => tag[0] === 'd'), ['d', 'agent']);
 
   await context.db.close();
 });
@@ -65,19 +69,21 @@ test('routes a returning user to the home menu and update float flow', async () 
   await step(context, '1*Grace Hopper*1*1*20000');
   await step(context, '1*Grace Hopper*1*1*20000*1');
 
-  assert.match(await step(context, '', 'session-2'), /^CON Minmo Agent/);
+  assert.match(await step(context, '', 'session-2'), /^CON Pontmore Agent/);
   assert.match(await step(context, '2', 'session-2'), /^CON Enter available float amount/);
   assert.match(await step(context, '2*30000', 'session-2'), /^CON Update float/);
   assert.match(await step(context, '2*30000*1', 'session-2'), /^END Float updated/);
 
   const agent = await context.db.get('SELECT * FROM agents WHERE phone = ?', ['+254700000123']);
   assert.equal(agent.liquidity, 30000);
-  assert.equal(context.events.length, 2);
+  assert.equal(context.events.length, 3);
+  assert.equal(context.events.at(-1).kind, 30360);
+  assert.equal(JSON.parse(context.events.at(-1).content).version, 'PIP-00-draft');
 
   await context.db.close();
 });
 
-test('routes a swap request action and publishes MIP-04', async () => {
+test('routes a swap request action and publishes PIP-02', async () => {
   const context = await createContext();
   await step(context, '');
   await step(context, '1');
@@ -95,7 +101,7 @@ test('routes a swap request action and publishes MIP-04', async () => {
     ['SWAP-TEST-1', agent.pubkey, agent.phone, 'KES', 3500, 2400, 'pending', 'MPESA-TEST']
   );
 
-  assert.match(await step(context, '', 'session-3'), /^CON Minmo Agent/);
+  assert.match(await step(context, '', 'session-3'), /^CON Pontmore Agent/);
   assert.match(await step(context, '1', 'session-3'), /^CON Pending swaps/);
   assert.match(await step(context, '1*1', 'session-3'), /^CON Swap SWAP-TEST-1/);
   assert.match(await step(context, '1*1*1', 'session-3'), /^END Payment marked sent/);
@@ -103,7 +109,11 @@ test('routes a swap request action and publishes MIP-04', async () => {
   const swap = await context.db.get('SELECT * FROM swaps WHERE swap_id = ?', ['SWAP-TEST-1']);
   const lastEvent = context.events.at(-1);
   assert.equal(swap.status, 'payment_sent');
-  assert.equal(JSON.parse(lastEvent.content).mip, 'MIP-04');
+  assert.equal(lastEvent.kind, 7301);
+  assert.equal(JSON.parse(lastEvent.content).pip, 'PIP-02');
+  assert.equal(JSON.parse(lastEvent.content).type, 'swap_transition');
+  assert.equal(JSON.parse(lastEvent.content).state, 'payment_sent');
+  assert.equal(JSON.parse(lastEvent.content).prev_state, 'pending');
 
   await context.db.close();
 });

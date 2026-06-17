@@ -9,6 +9,12 @@ CREATE TABLE IF NOT EXISTS agents (
   currency TEXT NOT NULL,
   payment_method TEXT NOT NULL,
   liquidity INTEGER NOT NULL DEFAULT 0,
+  password_hash TEXT,
+  signup_status TEXT NOT NULL DEFAULT 'active',
+  otp_hash TEXT,
+  otp_expires_at TEXT,
+  otp_verified_at TEXT,
+  account_status TEXT NOT NULL DEFAULT 'active',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

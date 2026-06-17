@@ -21,7 +21,7 @@ await initDb(db);
 const relayPublisher = createRelayPublisher({ logger });
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'Minmo Agent USSD' });
+  res.json({ ok: true, service: 'Pontmore Minmo USSD' });
 });
 
 app.use('/ussd', createUssdRouter({ db, relayPublisher, logger }));
@@ -33,5 +33,5 @@ app.use((error, _req, res, _next) => {
 });
 
 app.listen(port, () => {
-  logger.info({ port, db: db.filename }, 'Minmo Agent USSD listening');
+  logger.info({ port, db: db.filename }, 'Pontmore Minmo USSD listening');
 });

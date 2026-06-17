@@ -1,7 +1,7 @@
 {
   "name": "ussd-minmo",
   "version": "1.0.0",
-  "description": "Minmo Agent USSD service for Bitcoin liquidity agents over Africa's Talking USSD.",
+  "description": "Pontmore Minmo USSD service for Bitcoin liquidity Agents over Africa's Talking USSD.",
   "type": "module",
   "main": "index.js",
   "scripts": {
